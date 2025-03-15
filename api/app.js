@@ -7,25 +7,14 @@ const app = express();
 
 // 
 
-//
-
+//cargar rutas
+const user_routes = require('./routes/user');
 // middlewares
     app.use(bodyParser.urlencoded({extended:false}));
     app.use(bodyParser.json());
 
 // rutas
-app.get('/',(req, resp) => {
-    resp.status(200).send({
-        message: '........'
-    });
-});
-
-
-app.get('/pruebas',(req, resp) => {
-    resp.status(200).send({
-        message: 'accion de pruebas en el servidor de nodeJs'
-    });
-});
+app.use('/api', user_routes);
 
 //Exportar
 module.exports = app;
