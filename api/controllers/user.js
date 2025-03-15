@@ -2,8 +2,8 @@
 
 
 const bcrypt = require('bcrypt-nodejs');
-
 const User = require('../models/user');
+const jwt = require('../services/jwt')
 
 function home(req, resp){
     resp.status(200).send({
@@ -19,6 +19,7 @@ function pruebas(req, resp) {
     });
 };
 
+//registro de usuarios
 function saveUser(req, resp){
     const params = req.body;
     const user = new User();
@@ -74,13 +75,23 @@ function loginUser(req, resp){
     
         const email = params.email;
         const password = params.password;
-    user.findOne({email: email, password: password}, (err, user) => {
+    user.findOne({email: emaild}, (err, user) => {
         if(err) resp.status(500).send({message: 'Error en la oeticion'});
 
         if(user) {
             bcrypt.compare(password, user.password, (err, check) => {
                 if(check){
                     //devolver dato de usuario
+                    if(params.gettoken){
+                        return resp.status(200).send({
+                            token: jwt.createToken(user)
+                        });
+                    }else {
+                        
+                        user.password = undefined;
+                        return resp.status(500).send({user});
+                    }
+
                 }else {
                     return resp.status(404).send({message: 'El usuario no se ha podido identificar'});
                 }
@@ -95,5 +106,6 @@ function loginUser(req, resp){
 module.exports = {
     home,
     pruebas,
-    saveUser
+    saveUser,
+    loginUser
 }
