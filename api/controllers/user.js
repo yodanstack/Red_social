@@ -2,7 +2,7 @@
 
 
 const bcrypt = require('bcrypt-nodejs');
-const mongopag = require('mongoose-pagination');
+const mongoosePaginate = require('mongoose-paginate-v2');
 const fs = require('fs');
 const path = require('path');
 
