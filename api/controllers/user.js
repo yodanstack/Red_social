@@ -9,6 +9,7 @@ const path = require('path');
 const User = require('../models/user');
 const jwt = require('../services/jwt');
 const user = require('../models/user');
+const follows = require('../models/follows');
 
 //meotodos de prueba
 function home(req, resp){
@@ -119,8 +120,28 @@ function loginUser(req, resp){
 
             if(!user) return resp.status(404).send({message: 'usuario no existe'});
             
-            return resp.status(200).send({user});
+             followThisUser(req.user.sub, userId).then((value)=> {
+                return resp.status(200).send({user, value});
+             })   
+
+            return resp.status(200).send({user, follow});
         });
+    }
+
+    async function followThisUser(identityUserId, userId){
+        const following = await follows.findOne({"user": identityUserId, "followed": userId}).exec((err, follow) => {
+            if(err) return handleError(err);
+            return follow;
+        });  
+         
+        const followed = await follows.findOne({"user": userId, "followed": identityUserId}).exec((err, follow) => {
+            if(err) return handleError(err);
+            return follow;
+        });
+        return {
+            following: following,
+            followed: followed
+        }
     }
 
     //devolver usuarios ingresados 
@@ -165,13 +186,7 @@ function loginUser(req, resp){
             });
         }
         User.findByIdAndUpdate(userId, update, {new: true}, (err, userUpdate)=> {
-            if(err){
-                return resp.status(500).send({message: 'error en la peticion'});
-            }
-           if(!userUpdate) return resp.status(404).send({
-            message: 'No se ha podido actualizar el usuario'
-           });
-           return resp.status(200).send({userUpdate}); 
+          
         });
     }
 
@@ -180,9 +195,8 @@ function loginUser(req, resp){
         const userId = req.params.id;
 
         if(userId != req.user.sub){
-            return resp.status(500).send({
-                message: 'No tienes permisos para aletar este perfil'
-            });
+            return removeFilesOfLoads(resp ,file_path,'No tienes permiso para actualizar los datos del usuario');
+            }
             if(req.files){
                 const filePath = req.files.image.path;
                 const file_split = filePath.split('\\');
@@ -196,23 +210,47 @@ function loginUser(req, resp){
                 if(file_ext === 'png' || file_ext === 'jpg' ||
                    file_ext === 'jpeg' || file_ext === 'gif'){
                     //actualizar documento de usuario 
-
-                }else{
-                    fs.unlink(file_path, (err)=> {
-                        if(err) return resp.status(200).send({
-                            message: 'Extencion no valida'
-                        });
+                    User.findByIdAndUpdate(userId, {image: file_name},{new: true}, (err, userUpdate)=> {
+                        if(err){
+                            return resp.status(500).send({message: 'error en la peticion'});
+                        }
+                       if(!userUpdate) return resp.status(404).send({
+                        message: 'No se ha podido actualizar el usuario'
+                       });
+                       return resp.status(200).send({userUpdate});
                     });
+                }else{
+                   return removeFilesOfLoads(resp ,file_path, 'Extension no valida');
                 }
-            }
+
         }else{
-            return resp.status(200).send({
-                message: 'No se han subido imagenes'
-            });
+            return resp.status(200).send({message: 'No se han subido imagenes'});
         }
     }
  
+    function removeFilesOfLoads(resp ,file_path, message){
+        fs.unlink(file_path, (err)=> {
+            if(err) return resp.status(200).send({
+                message: message
+            });
+        });        
+    }
     
+    function getImageFile(req, resp){
+        const image_file = req.params.imageFile;
+        const path_file =  './uploads/users/' + image_file;
+
+        fs.exists(path_file, (exist) => {
+            if(exist) {
+                resp.sendFile(path.resolve(path_file));
+            }else{
+                resp.status(200).send({message: 'no existe la imagen'});
+            }
+
+        })
+    }
+    
+
 module.exports = {
     home,
     pruebas,
@@ -221,5 +259,7 @@ module.exports = {
     getUser,
     getUsers,
     updateUser,
-    uploadImage
+    uploadImage,
+    removeFilesOfLoads,
+    getImageFile
 }
