@@ -91,11 +91,77 @@ function deletePublication(req, resp) {
     });
 }
 
+    function uploadImage(req, resp) {
+        const publicationId = req.params.id;
+
+            if(req.files){
+                const filePath = req.files.image.path;
+                const file_split = filePath.split('\\');
+                // obtiene el nombre de la imagen
+                const file_name = file_split[2]; 
+                // devolver la extencion de la imagen ingresada
+                const ext_split = file_name.split('\.');
+                //arroja unicamente la extencion de la imagen
+                const file_ext = ext_split[1];
+            
+                if(file_ext === 'png' || file_ext === 'jpg' ||
+                   file_ext === 'jpeg' || file_ext === 'gif'){
+
+                    publication.findOne({'user': req.user.sub, '_id': publicationId}).exec((err, publication)=>{
+                        if(publication){
+                            //actualizar documento de usuario 
+                            publication.findByIdAndUpdate(publicationId, {file: file_name},{new: true}, (err, publicationUpdate)=> {
+                                if(err){
+                                    return resp.status(500).send({message: 'error en la peticion'});
+                                }
+                               if(!publicationUpdate) return resp.status(404).send({
+                                message: 'No se ha podido actualizar el usuario'
+                               });
+                               return resp.status(200).send({publication: publicationUpdate});
+                            });
+        
+                        }else{
+                            return removeFilesOfLoads(resp ,file_path, 'No tienes permisos para actualizar esta publicacion');
+                        }
+                    });
+
+                }else{
+                    return removeFilesOfLoads(resp ,file_path, 'Extension no valida');
+                }
+
+        }else{
+            return resp.status(200).send({message: 'No se han subido imagenes'});
+        }
+    }
+ 
+    function removeFilesOfLoads(resp ,file_path, message){
+        fs.unlink(file_path, (err)=> {
+            if(err) return resp.status(200).send({
+                message: message
+            });
+        });        
+    }
+    
+    function getImageFile(req, resp){
+        const image_file = req.params.imageFile;
+        const path_file =  './uploads/publications/' + image_file;
+
+        fs.exists(path_file, (exist) => {
+            if(exist) {
+                resp.sendFile(path.resolve(path_file));
+            }else{
+                resp.status(200).send({message: 'no existe la imagen'});
+            }
+
+        })
+    }
 
 
 module.exports = {
     savePublication,
     getPublications,
     getPublication,
-    deletePublication
+    deletePublication,
+    uploadImage,
+    getImageFile
 }

@@ -13,5 +13,7 @@ api.post('./name', md_auth.ensureAuth, PublicationControler.savePublication);
 api.get('/publication/:page?', md_auth.ensureAuth, PublicationControler.getPublications);
 api.get('/publication/:id', md_auth.ensureAuth, PublicationControler.getPublication)
 api.delete('./publication/:id', md_auth.ensureAuth, PublicationControler.deletePublication);
+api.post('/upload-image-publication/:id', [md_auth.ensureAuth, md_upload], PublicationControler.uploadImage);
+api.get('/get-image-pub/:imageFile' ,  md_auth.ensureAuth, PublicationControler.getImageFile);  
 
 module.exports = api;

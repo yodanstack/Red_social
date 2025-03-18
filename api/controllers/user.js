@@ -10,7 +10,8 @@ const User = require('../models/user');
 const jwt = require('../services/jwt');
 const user = require('../models/user');
 const follows = require('../models/follows');
-
+const Publication = require('../controllers/publications');
+const { count } = require('console');
 
 //meotodos de prueba
 function home(req, resp){
@@ -142,9 +143,17 @@ function loginUser(req, resp){
             if(err) return handleError(err);
             return follow;
         });
+
+        const publications = await Publication.count({"user": user_id}).exec((err, count)=> {
+            if(err) return handleError(err);
+            
+            return count;
+        });  
+
         return {
             following: following,
-            followed: followed
+            followed: followed,
+            publications: publications
         }
     }
 
