@@ -11,6 +11,7 @@ const jwt = require('../services/jwt');
 const user = require('../models/user');
 const follows = require('../models/follows');
 
+
 //meotodos de prueba
 function home(req, resp){
     resp.status(200).send({
@@ -121,7 +122,10 @@ function loginUser(req, resp){
             if(!user) return resp.status(404).send({message: 'usuario no existe'});
             
              followThisUser(req.user.sub, userId).then((value)=> {
-                return resp.status(200).send({user, value});
+                user.password = undefined;
+                return resp.status(200).send({
+                    user, following: value.following, followed: value.followed
+                });
              })   
 
             return resp.status(200).send({user, follow});
@@ -159,17 +163,75 @@ function loginUser(req, resp){
             if(err){
                 return resp.status(500).send({message: 'error en la peticion'});
             }
-            if(!user) {
+            if(!users) {
             return resp.status(404).send({message: 'No hay usuarios para monstrar'});
             }
-        
-            return resp.status(200).send({
-                users,
-                total,
-                page: math.ceil(total/itemsPerPage)
+            
+            followUsersId(identityUserId).then((value)=> {
+                return resp.status(200).send({
+                    users,
+                    users_following: value.following,
+                    users_followmw: value.followed,
+                    total,
+                    page: math.ceil(total/itemsPerPage)
+                });
             });
+
+            
         });
 
+    }
+
+    async function followUsersId(user_id) {
+           const following = await follow.find({"user": user_id} ).select({'_id':0, '_v':0, 'user':0}, (err, follows)=> {
+            return follows;
+        });
+
+           const followed = await follow.find({"followed": user_id} ).select ({'_id':0, '_v':0, 'followed':0}, (err, follows)=> {
+            return follows;
+        });
+            
+            const followed_celan = [];
+            follows.forEach((follow) => {
+               follows_clean.push(follow.user)     
+                });
+
+
+            const following_clean = [];
+            follows.forEach((follow) => {
+               following_clean.push(follow.following)     
+                });
+
+           return {
+               following: following_clean,
+               followed: followed_celan
+           }
+    }
+
+    function getCounters(req, resp){
+        const userId = req.user.sur;
+        if(req.params.id){
+           userId = req.params.id; 
+        }
+        getCountFollows(req.params.id).then((value)=> {
+            return resp.status(200).send(value);
+        });
+    }
+
+    async function getCountFollows(user_id) {
+        const following = await Follow.cont({'user': user_id}).exec((err,count)=> {
+            if(err) return handleError(err);
+                return count;
+        });
+
+        folloewd = await  await Follow.cont({'followed': user_id}).exec((err,count)=> {
+            if(err) return handleError(err);
+                return count;
+        });
+        return {
+            following: following,
+            followed: followed
+        }
     }
 
 // Edicion de datos de usuario
@@ -258,8 +320,10 @@ module.exports = {
     loginUser,
     getUser,
     getUsers,
+    getCounters,
     updateUser,
     uploadImage,
     removeFilesOfLoads,
-    getImageFile
+    getImageFile,
+
 }

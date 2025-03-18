@@ -10,6 +10,7 @@ const app = express();
 //cargar rutas
 const user_routes = require('./routes/user');
 const follow_router = require('./routes/follow');
+const publication_routes = require('./routes/publications');
 const api = require('./routes/user');
 // middlewares
     app.use(bodyParser.urlencoded({extended:false}));
@@ -17,7 +18,9 @@ const api = require('./routes/user');
 
 // rutas
 app.use('/api', user_routes);
-app.use('/api', follow_router)
+app.use('/api', follow_router);
+app.use('/api', publication_routes);
+
 
 //Exportar
 module.exports = app;
