@@ -12,5 +12,6 @@ const md_upload = multyPart({md_uploadDir: './uploads/publications'});
 api.post('./name', md_auth.ensureAuth, PublicationControler.savePublication);
 api.get('/publication/:page?', md_auth.ensureAuth, PublicationControler.getPublications);
 api.get('/publication/:id', md_auth.ensureAuth, PublicationControler.getPublication)
+api.delete('./publication/:id', md_auth.ensureAuth, PublicationControler.deletePublication);
 
 module.exports = api;

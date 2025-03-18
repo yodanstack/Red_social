@@ -78,9 +78,24 @@ function getPublication(req, resp){
     });
 }
 
+function deletePublication(req, resp) {
+    const publicacionId = req.params.id;
+
+    publication.find({user: req.user.sub, '_id': publicacionId}).remove(err => {
+        if(err) return resp.status(500).send({message: 'Error al borrar publicacion'});
+
+        if(!Publication) return resp.status(404).send({
+            message: 'error al borrar la publicacion'
+        });
+       return resp.tatus(200).send({message: 'Publicacion Eliminada'});
+    });
+}
+
+
 
 module.exports = {
     savePublication,
     getPublications,
-    getPublication
+    getPublication,
+    deletePublication
 }
